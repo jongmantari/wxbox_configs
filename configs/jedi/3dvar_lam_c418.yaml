@@ -1,0 +1,132 @@
+cost function:
+  cost type: 3D-Var
+
+  time window:
+    begin: 2020-12-14T23:00:00Z
+    length: PT2H
+
+  # ✅ MATCH NICAS
+  analysis variables:
+    - air_temperature
+
+  geometry:
+    fms initialization:
+      namelist filename: Data/fv3files/fmsmpp.nml
+      field table filename: Data/fv3files/field_table_lam_rrfs
+    namelist filename: Data/fv3files/input_lam_c418.nml
+    akbk: Data/inputs/lam_rrfs/INPUT/akbk65.nc
+
+
+  background:
+    datetime: 2020-12-15T00:00:00Z
+    filetype: fms restart
+    datapath: Data/inputs/lam_c418/bkg
+    filename_core: 20201215.000000.rrfs_C418.fv_core.res.tile1.nc
+    filename_trcr: 20201215.000000.rrfs_C418.fv_tracer.res.tile1.nc
+    filename_sfcw: 20201215.000000.rrfs_C418.fv_srf_wnd.res.tile1.nc
+    filename_sfcd: 20201215.000000.rrfs_C418.sfc_data.nc
+    filename_cplr: 20201215.000000.rrfs_C403.coupler.res
+
+    # ✅ REQUIRED FOR PRESSURE
+    state variables:
+      - air_temperature
+      - air_pressure_thickness
+      - air_pressure_at_surface
+
+    field io names:
+      air_temperature: T
+      air_pressure_thickness: DELP
+      air_pressure_at_surface: ps
+
+
+  # ✅ ✅ RRFS NICAS
+  background error:
+    covariance model: SABER
+
+    saber central block:
+      saber block name: BUMP_NICAS
+
+      active variables:
+        - air_temperature
+
+      read:
+        io:
+          files prefix: Data/bump/fv3jedi_bumpparameters_c418
+
+        drivers:
+          multivariate strategy: univariate
+          read local nicas: true
+
+
+  observations:
+    observers:
+      - obs space:
+          name: Aircraft
+
+          obsdatain:
+            engine:
+              type: H5File
+              obsfile: Data/obs/testinput_tier_1/aircraft_obs_2020121500_m.nc4
+
+          # ✅ OUTPUT DIAGNOSTICS (OMB / OMA)
+          obsdataout:
+            engine:
+              type: H5File
+              obsfile: /home/jonggyunkim/runs/hofx_rrfs/analysis_c418/obs/aircraft_diagnostics.nc4
+
+          simulated variables:
+            - airTemperature
+
+          variables:
+            - air_temperature
+            - air_pressure
+
+        obs operator:
+          name: VertInterp
+          vertical coordinate: air_pressure
+          observation vertical coordinate: pressure
+          observation vertical coordinate group: MetaData
+          interpolation method: log-linear
+
+          required vars:
+            - air_temperature
+            - air_pressure
+
+        obs error:
+          covariance model: diagonal
+
+        # ✅ ENABLE DIAGNOSTICS OUTPUT
+        diagnostics:
+          - airTemperature
+
+
+variational:
+  minimizer:
+    algorithm: DRIPCG
+
+  iterations:
+    - ninner: 2
+      gradient norm reduction: 1e-4
+
+      geometry:
+        namelist filename: Data/fv3files/input_lam_c418.nml
+        akbk: Data/inputs/lam_rrfs/INPUT/akbk65.nc
+
+
+# ✅ ✅ ANALYSIS OUTPUT LOCATION
+output:
+  filetype: fms restart
+  datapath: /home/jonggyunkim/runs/hofx_rrfs/analysis_c418/
+  prefix: 3dvar_c418
+
+  field io names:
+    air_temperature: T
+    air_pressure_thickness: DELP
+    air_pressure_at_surface: ps
+
+
+# ✅ OPTIONAL: SAVE INCREMENT FILES
+increment:
+  filetype: fms restart
+  datapath: /home/jonggyunkim/runs/hofx_rrfs/analysis_c418/increment/
+  prefix: inc_c418
