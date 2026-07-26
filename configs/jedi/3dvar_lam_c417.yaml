@@ -51,7 +51,7 @@ cost function:
 
       read:
         io:
-          files prefix: Data/bump/fv3jedi_bumpparameters_c417
+          files prefix: Data/bump/fv3jedi_bumpparameters_c417_2d
 
         drivers:
           multivariate strategy: univariate
@@ -72,7 +72,7 @@ cost function:
           obsdataout:
             engine:
               type: H5File
-              obsfile: /home/jonggyunkim/runs/hofx_rrfs/analysis_c417/obs/aircraft_diagnostics.nc4
+              obsfile: analysis_c417/obs/aircraft_diagnostics.nc4
 
           simulated variables:
             - airTemperature
@@ -116,7 +116,7 @@ variational:
 # ✅ ✅ ANALYSIS OUTPUT LOCATION
 output:
   filetype: fms restart
-  datapath: /home/jonggyunkim/runs/hofx_rrfs/analysis_c417/
+  datapath: analysis_c417/
   prefix: 3dvar_c417
 
   field io names:
@@ -128,5 +128,5 @@ output:
 # ✅ OPTIONAL: SAVE INCREMENT FILES
 increment:
   filetype: fms restart
-  datapath: /home/jonggyunkim/runs/hofx_rrfs/analysis_c417/increment/
+  datapath: analysis_c417/increment/
   prefix: inc_c417

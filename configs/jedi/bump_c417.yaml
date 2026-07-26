@@ -36,17 +36,17 @@ background error:
         multivariate strategy: univariate
 
       io:
-        files prefix: Data/bump/fv3jedi_bumpparameters_c417
+        files prefix: Data/bump/fv3jedi_bumpparameters_c417_2d
 
       nicas:
         resolution: 6
         explicit length-scales: true
         horizontal length-scale:
           - groups: [air_temperature]
-            value: 250000.0
+            value: 100000.0
         vertical length-scale:
           - groups: [air_temperature]
-            value: 0.3
+            value: 0.001
 
       grids:
         - model:

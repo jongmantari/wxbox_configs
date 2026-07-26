@@ -51,7 +51,7 @@ cost function:
 
       read:
         io:
-          files prefix: Data/bump/fv3jedi_bumpparameters_c1667
+          files prefix: Data/bump/fv3jedi_bumpparameters_c1667_2d
 
         drivers:
           multivariate strategy: univariate

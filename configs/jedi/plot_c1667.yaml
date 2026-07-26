@@ -1,0 +1,34 @@
+files:
+
+  analysis:
+    analysis_c1667/3dvar_c1667.fv_core.res.nc
+
+  background:
+    Data/inputs/lam_c1667/bkg/20201215.000000.rrfs_C1667.fv_core.res.tile1.nc
+
+  obs:
+    analysis_c1667/obs/aircraft_diagnostics.nc4
+
+  grid:
+    Data/inputs/lam_c1667/INPUT/C1667_grid.tile7.halo3.nc
+
+plot:
+
+  var: T
+
+  level: -1
+
+  region:
+    - -130
+    - -60
+    - 20
+    - 55
+
+  output_pdf:
+    c1667_3dvar_diagnostics.pdf
+
+density:
+
+  bandwidth: 1.2
+
+  points: 500
