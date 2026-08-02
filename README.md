@@ -1,42 +1,12 @@
 # WxBox FV3-JEDI Demonstrations
 
-This repository provides Docker-based FV3-JEDI demonstration workflows developed with the WxBox Stack.
-
-The demonstrations include:
-
-- Custom FV3 regional grid generation
-- FV3 mosaic generation
-- Background interpolation
-- JEDI HofX workflows
-- JEDI 2DVAR workflows
-- BUMP covariance workflows
-- Diagnostic plotting
-- Docker deployment
-- AWS S3 distribution
+This S3 repository contains reproducible FV3-JEDI demonstration workflows built with the WxBox Stack.
 
 ---
 
-# 1. Install Docker
+# Requirements
 
-## Windows
-
-Install Docker Desktop:
-
-https://www.docker.com/products/docker-desktop/
-
-Verify:
-
-```powershell
-docker --version
-```
-
----
-
-## Linux
-
-```bash
-curl -fsSL https://get.docker.com | sh
-```
+## Docker
 
 Verify:
 
@@ -44,20 +14,7 @@ Verify:
 docker --version
 ```
 
----
-
-# 2. Install AWS CLI
-
-## Linux
-
-```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" \
-  -o awscliv2.zip
-
-unzip awscliv2.zip
-
-sudo ./aws/install
-```
+## AWS CLI
 
 Verify:
 
@@ -65,11 +22,7 @@ Verify:
 aws --version
 ```
 
----
-
-# 3. Configure AWS Credentials
-
-Configure your Mantari AWS account:
+Configure Mantari credentials:
 
 ```bash
 aws configure --profile mantari
@@ -78,46 +31,33 @@ aws configure --profile mantari
 Verify:
 
 ```bash
-aws sts get-caller-identity --profile mantari
-```
-
-Example:
-
-```text
-Account: 334566771276
-Arn: arn:aws:iam::334566771276:user/jong
+aws sts get-caller-identity \
+    --profile mantari
 ```
 
 ---
 
-# 4. Download Docker Image
-
-Docker Hub:
-
-https://hub.docker.com/u/jongmantari
+# Docker Image
 
 Pull the recommended image:
 
 ```bash
-docker pull jongmantari/wxbox-fv3jedi:5a0d925-tools
+docker pull \
+    jongmantari/wxbox-fv3jedi:5a0d925-tools
 ```
 
----
-
-# 5. Launch Container
-
-Mount AWS credentials automatically:
+Launch:
 
 ```bash
 docker run -it --rm \
-  -v ~/.aws:/root/.aws:ro \
-  -v $PWD:$PWD \
-  -w $PWD \
-  jongmantari/wxbox-fv3jedi:5a0d925-tools \
-  bash
+    -v ~/.aws:/root/.aws:ro \
+    -v $PWD:$PWD \
+    -w $PWD \
+    jongmantari/wxbox-fv3jedi:5a0d925-tools \
+    bash
 ```
 
-Inside the container:
+Load the environment:
 
 ```bash
 module use /home/wxbox_stack/modulefiles
@@ -125,226 +65,139 @@ module use /home/wxbox_stack/modulefiles
 module load jedi/5a0d925
 ```
 
-Verify environment:
+Verify:
 
 ```bash
-python -c "import xarray"
-python -c "import netCDF4"
-python -c "import scipy"
-python -c "import matplotlib"
-python -c "import cartopy"
+which wxbox-letkf
+which wxbox-plot
+which wxbox-movie
 ```
 
 ---
 
-# 6. Download Demonstrations
+# Available Command Line Tools
 
-Mantari S3 bucket:
+## Grid
 
-```text
-s3://mantari-wxbox-fv3jedi
+```bash
+wxbox-create-grid
+wxbox-create-mosaic
 ```
 
-Download the 2DVAR demonstration:
+## HRRR
+
+```bash
+wxbox-download-hrrr
+wxbox-hrrr-to-fv3
+```
+
+## Ensemble
+
+```bash
+wxbox-gen-ens
+```
+
+## Observation Database
+
+```bash
+wxbox-build-obsdb
+```
+
+## LETKF
+
+```bash
+wxbox-letkf
+```
+
+## Diagnostics
+
+```bash
+wxbox-plot
+wxbox-density
+wxbox-movie
+```
+
+---
+
+# Available Demonstrations
+
+List available demos:
+
+```bash
+aws s3 ls \
+    s3://mantari-wxbox-fv3jedi/demos/ \
+    --profile mantari
+```
+
+---
+
+# Download a Demonstration
+
+Example:
 
 ```bash
 aws s3 sync \
-  s3://mantari-wxbox-fv3jedi/demos/2dvar_demo \
-  ./2dvar_demo
+    s3://mantari-wxbox-fv3jedi/demos/letkf_demo \
+    ./letkf_demo \
+    --profile mantari
 ```
 
-Enter the demonstration directory:
+Enter:
 
 ```bash
-cd 2dvar_demo
+cd letkf_demo
 ```
 
 ---
 
-# 7. Demonstration Contents
+# LETKF Demonstration
 
-The package contains:
+Example workflow:
+
+```bash
+wxbox-build-obsdb asos_concat.yaml
+
+wxbox-gen-ens ensemble_c1667.yaml
+
+wxbox-letkf run \
+    configs/experiments/c1667.yaml
+
+wxbox-plot run \
+    configs/experiments/c1667.yaml
+
+wxbox-density \
+    configs/experiments/c1667.yaml
+
+wxbox-movie \
+    configs/experiments/c1667.yaml
+```
+
+---
+
+# Repository Structure
 
 ```text
-create_esg_grid.py
-create_mosaic.py
-regrid_fv3_restart.py
-plot_lam_analysis_obs.py
+s3://mantari-wxbox-fv3jedi/
 
-c417.yaml
-c1667.yaml
-
-bump_c417.yaml
-bump_c1667.yaml
-
-hofx_nomodel_c417.yaml
-hofx_nomodel_c1667.yaml
-
-analysis_c417/
-analysis_c1667/
-
-Data/
-```
-
-Supported domains:
-
-- C417
-- C1667
-
----
-
-# 8. Grid Generation
-
-Generate regional FV3 grids:
-
-```bash
-python create_esg_grid.py c417.yaml
-
-python create_esg_grid.py c1667.yaml
+├── README.md
+└── demos/
+    ├── letkf_demo/
+    ├── 2dvar_demo/
+    └── ...
 ```
 
 ---
 
-# 9. Mosaic Generation
-
-Create FV3 mosaic files:
-
-```bash
-python create_mosaic.py c417.yaml
-
-python create_mosaic.py c1667.yaml
-```
-
----
-
-# 10. Background Interpolation
-
-Generate FV3 restart backgrounds:
-
-```bash
-python regrid_fv3_restart.py c417.yaml
-
-python regrid_fv3_restart.py c1667.yaml
-```
-
----
-
-# 11. Run 2DVAR Demonstration
-
-```bash
-./run_2dvar.sh
-```
-
-Included workflows:
-
-- JEDI HofX
-- BUMP covariance
-- FV3-JEDI 2DVAR
-- Aircraft observation assimilation
-
----
-
-# 12. Generate Diagnostics
-
-Generate diagnostic plots:
-
-```bash
-python plot_lam_analysis_obs.py \
-  --config plot_c417.yaml
-```
-
-or
-
-```bash
-python plot_lam_analysis_obs.py \
-  --config plot_c1667.yaml
-```
-
-Generated diagnostics include:
-
-- Background field
-- Analysis field
-- OMB (Obs − Background)
-- OMA (Obs − Analysis)
-- Innovation density curves
-- Innovation mean shift
-- RMSE reduction
-
----
-
-# 13. Docker Image
-
-Recommended image:
-
-```bash
-docker pull jongmantari/wxbox-fv3jedi:5a0d925-tools
-```
-
-Inside container:
-
-```bash
-module use /home/wxbox_stack/modulefiles
-
-module load jedi/5a0d925
-```
-
----
-
-# 14. S3 Repository
-
-Bucket:
-
-```text
-s3://mantari-wxbox-fv3jedi
-```
-
-Demonstration:
-
-```text
-s3://mantari-wxbox-fv3jedi/demos/2dvar_demo
-```
-
-Documentation:
-
-```text
-README.md
-README.html
-```
-
----
-
-# 15. Workflow Overview
-
-```text
-Custom Grid
-      ↓
-Mosaic
-      ↓
-Background Regridding
-      ↓
-HofX
-      ↓
-2DVAR
-      ↓
-Diagnostics
-```
-
----
-
-# Project Resources
-
-## GitHub
-
-https://github.com/jongmantari/wxbox_configs
+# Resources
 
 ## Docker Hub
 
 https://hub.docker.com/u/jongmantari
 
+## GitHub
+
+https://github.com/jongmantari/wxbox_configs
+
 ## S3 Bucket
 
 s3://mantari-wxbox-fv3jedi
-
----
-
-Developed as part of the Mantari WxBox Stack FV3-JEDI workflow framework.
