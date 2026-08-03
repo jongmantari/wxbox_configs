@@ -1,94 +1,33 @@
-# WxBox FV3-JEDI Demonstrations
-
+WxBox FV3-JEDI Demonstrations
 This S3 repository contains reproducible FV3-JEDI demonstration workflows built with the WxBox Stack.
-
-The demonstrations use:
-
-- FV3-JEDI
-- JEDI LETKF
-- HRRR background generation
-- Ensemble generation
-- IODA observation databases
-- Diagnostics and verification
-- Movie generation
-
----
-
-# Requirements
-
-## Docker
-
-Verify:
-
+Requirements
+Docker
 ```bash
 docker --version
 ```
-
-## AWS CLI
-
-Verify:
-
+AWS CLI
 ```bash
 aws --version
 ```
-
-Configure Mantari credentials:
-
+Configure credentials:
 ```bash
 aws configure --profile mantari
+aws sts get-caller-identity --profile mantari
 ```
-
-Verify:
-
+Docker Image
 ```bash
-aws sts get-caller-identity \
-    --profile mantari
+docker pull jongmantari/wxbox-fv3jedi:5a0d925-tools-v0.1
 ```
-
----
-
-# Docker Image
-
-Pull the recommended image:
-
-```bash
-docker pull \
-    jongmantari/wxbox-fv3jedi:5a0d925-tools-v0.1
-```
-
----
-
-# Download Demonstration
-
-List available demonstrations:
-
-```bash
-aws s3 ls \
-    s3://mantari-wxbox-fv3jedi/demos/ \
-    --profile mantari
-```
-
-Download the LETKF demonstration:
-
+Download Demonstration
 ```bash
 aws s3 sync \
     s3://mantari-wxbox-fv3jedi/demos/letkf_demo \
     ./letkf_demo \
     --profile mantari
-```
 
-Enter the demonstration directory:
-
-```bash
 cd letkf_demo
 ```
-
----
-
-# Launch Container
-
-Start the Docker container from inside the demonstration directory:
-
+Launch Container
 ```bash
 docker run -it --rm \
     -v $PWD:$PWD \
@@ -96,340 +35,76 @@ docker run -it --rm \
     jongmantari/wxbox-fv3jedi:5a0d925-tools-v0.1 \
     bash
 ```
-
----
-
-# Initialize Environment
-
-Inside the container:
-
+Initialize Environment
 ```bash
 source /entrypoint.sh
-
 module use /home/wxbox_stack/modulefiles
-
 module load jedi/5a0d925
 ```
-
 Verify:
-
 ```bash
 which wxbox-letkf
-
 which wxbox-gen-ens
-
 which wxbox-plot
-
 which wxbox-density
-
 which wxbox-movie
 ```
-
----
-
-# Run LETKF Demonstration
-
-The demonstration already contains a pre-generated observation database.
-
-## 1. Generate Ensemble Members
-
+Run LETKF Demonstration
+Generate ensemble members:
 ```bash
-wxbox-gen-ens \
-    ensemble_c1667.yaml
+wxbox-gen-ens ensemble_c1667.yaml
 ```
-
-Generated:
-
-```text
-runs/c1667/<cycle>/ensemble/
-```
-
----
-
-## 2. Validate Experiment
-
+Validate:
 ```bash
-wxbox-letkf check \
-    configs/experiments/c1667.yaml
+wxbox-letkf check configs/experiments/c1667.yaml
 ```
-
----
-
-## 3. Run LETKF
-
+Run LETKF:
 ```bash
-wxbox-letkf run \
-    configs/experiments/c1667.yaml
+wxbox-letkf run configs/experiments/c1667.yaml
 ```
-
-Generated:
-
-```text
-runs/c1667/<cycle>/letkf/
-```
-
----
-
-## 4. Generate Diagnostics
-
+Generate diagnostics:
 ```bash
-wxbox-plot run \
-    configs/experiments/c1667.yaml
+wxbox-plot run configs/experiments/c1667.yaml
 ```
-
-Generated:
-
-```text
-runs/c1667/<cycle>/letkf/post/
-```
-
----
-
-## 5. Generate Innovation Density
-
+Generate innovation density:
 ```bash
-wxbox-density \
-    configs/experiments/c1667.yaml
+wxbox-density configs/experiments/c1667.yaml
 ```
-
-Generated:
-
-```text
-runs/c1667/post/experiment_density.png
-```
-
----
-
-## 6. Generate Movies
-
+Generate movies:
 ```bash
-wxbox-movie \
-    configs/experiments/c1667.yaml
+wxbox-movie configs/experiments/c1667.yaml
 ```
-
-Generated:
-
-```text
-runs/c1667/post/*.mp4
-```
-
----
-
-# Workflow Overview
-
-```text
-Observation Database
-        ↓
-wxbox-gen-ens
-        ↓
-Ensemble Members
-        ↓
-wxbox-letkf
-        ↓
-LETKF Analysis
-        ↓
-wxbox-plot
-        ↓
-Diagnostics
-        ↓
-wxbox-density
-        ↓
-Innovation Density
-        ↓
-wxbox-movie
-        ↓
-MP4 Animations
-```
-
----
-
-# WxBox Utilities Reference
-
-The Docker image provides the following utili*ies.
-
-## Grid Utilities
-
-Generate *SG/FV3 regional grids:
-
+WxBox Utilities
+Grid:
 ```bash
-wx*ox-create-grid grid.yaml
+wxbox-create-grid grid.yaml
+wxbox-create-mosaic grid.yaml
 ```
-
-Gene*ate FV3 mosaics:
-
+HRRR:
 ```bash
-wxbox-cr*ate-mosaic grid.yaml
+wxbox-download-hrrr hrrr_download.yaml
+wxbox-hrrr-to-fv3 hrrr_fv3.yaml
 ```
-
-Typical *utputs:
-
-```text
-C1667_grid.tile7.*c
-
-grid_spec.tile7.halo3.nc
-```
-
--*-
-
-## HRRR Utilities
-
-Download HRR* analyses:
-
+Observation Database:
 ```bash
-wxbox-download*hrrr hrrr_download.yaml
+wxbox-build-obsdb obsdb.yaml
 ```
-
-Conve*t HRRR analyses to FV3 restart fil*s:
-
+LETKF:
 ```bash
-wxbox-hrrr-to-fv3 hrrr*fv3.yaml
+wxbox-letkf check experiment.yaml
+wxbox-letkf render experiment.yaml
+wxbox-letkf run experiment.yaml
+wxbox-letkf clean experiment.yaml
 ```
-
-Typical outputs:
-
-``*text
-fv3_restart/
-
-├── hrrr.fv_cor*.res.tile1.nc
-├──*hrrr.fv_tracer.res.tile1.nc
-├──*hrrr.fv_srf*wnd.res.tile1.nc
-├──*hrrr.sfc_data.nc
-└── *.coupler.res*```
-
----
-
-## Ensemble Utilities*
-Generate synthetic ensemble membe*s:
-
+Diagnostics:
 ```bash
-wxbox-gen-ens ensemble*yaml
-```
-
-Outputs:
-
-```text
-runs/<*xperiment>/<cycle>/ensemble/
-
-├── *em01
-├── mem02
-├── mem03
-├── mem04*└── mem05
-```
-
----
-
-## Observation*Database Utilities
-
-Build cycle*aware IODA databases:
-
-```bash
-wxb*x-build-obsdb obsdb.yaml
-``*
-
-Outputs:
-
-```text
-runs/*bsdb/asos/
-
-└── <cycle>/
-    └*─*iem_asos_obs_<cycle>.nc4
-```
-
----
-**# LETKF Utilities
-
-Validate experi*ent:
-
-```bash
-wxbox-let*f check experiment.yaml
-```
-
-Rende* JEDI YAML files:
-
-```bash
-wxbox-l*tkf render experiment.yaml
-```
-
-Ru* cycling:
-
-```bash
-wxbox-letkf run*experiment.yaml
-```
-
-Clean generat*d products:
-
-```bash
-wxbox-letkf c*ean experiment.yaml
-```
-
----
-
-## D*agnostic Utilities
-
-Generate cycle*diagnostics:
-
-```bash
-wxbox-plot r*n experiment.yaml
-```
-
-Generate ex*eriment summary diagnostics:
-
-```b*sh
-wxbox-plot summary experiment.y*ml
-```
-
-Generate innovation densit*:
-
-```bash
-wxbox-density experimen*.yaml
-```
-
-Generate MP4 movies:
-
-`*`bash
+wxbox-plot run experiment.yaml
+wxbox-plot summary experiment.yaml
+wxbox-density experiment.yaml
 wxbox-movie experiment.yaml
-*``
-
----
-
-# Repository Structure
-
-`*`text
-s3://mantari-wxbox-fv3jedi/
-*├── README.md
-└── demos/
-    ├── l*tkf_demo/
-    ├── 2dvar_demo/
-    *── ...
 ```
-
----
-
-# Notes
-
-- AWS CL* is required only on the host syst*m for downloading demonstrations.
-* AWS CLI is not required inside th* Docker container.
-- The Docker im*ge is platform independent and con*ains all required WxBox utilities.*- Demonstrations are designed to r*n entirely from locally downloaded*data.
-- The LETKF demonstration in*ludes a pre-generated observation *atabase.
-
----
-
-# Resources
-
-## Doc*er Hub
-
-https://hub.docker.com/u/j*ngmantari
-
-## GitHub
-
-https://gith*b.com/jongmantari/wxbox_configs
-
-## S3 Bucket
-
-```text
-s3://mantari-wxbox-fv3jedi
-```
-
----
-
-Developed as part of the Mantari WxBox Stack FV3-JEDI workflow framework.
+Notes
+AWS CLI is only required on the host machine.
+AWS CLI is not required inside the Docker container.
+The LETKF demo includes a pre-generated observation database.
+Demonstrations run entirely from locally downloaded data.
